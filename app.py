@@ -63,7 +63,7 @@ with st.form("affiliation_form", clear_on_submit=False):
                 if isinstance(matches, list):
                     if len(matches) > 0:
 
-                        st.success(f"✅ Matchs chargés (à partir du {date_from}) !")
+                        st.success(f"✅ Matchs chargés ! (à partir du {date_from})")
                         st.session_state["matches"] = matches
                         st.session_state["flag_uploaded_file"] = True
                     else:
@@ -71,7 +71,7 @@ with st.form("affiliation_form", clear_on_submit=False):
                             f"⚠️ Données récupérées mais pas de résultats encodés (depuis {date_from})...\n\n"
                             "Peut-être n'avez vous pas encore joué de matchs cette période-ci ?"
                         )
-                    
+
                     if category_change:
                         st.info(
                             f"⚠️ On détecte un changement de catégorie durant la dernière période. "
@@ -199,7 +199,6 @@ if manual_input:
 
     with st.form("match_form"):
         st.subheader("Ajouter un match")
-
 
         genre = st.selectbox("Genre", ["Messieurs", "Dames"])
         category = st.selectbox(
