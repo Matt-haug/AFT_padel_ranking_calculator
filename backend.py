@@ -24,7 +24,7 @@ RANKING_THRESHOLDS_WOMEN = {
     "P200": {"drop": 25, "up1": 60, "up2": 100},
     "P300": {"drop": 25, "up1": 65, "up2": 100},
     "P400": {"drop": 30, "up1": 70, "up2": 100},
-    "P500": {"drop": 30, "up1": 75, "up2": 100},
+    "P500": {"drop": 30, "up1": 100, "up2": 100},
 }
 
 
@@ -110,13 +110,16 @@ def generate_recommendation(
     limits = thresholds[category]
     if ratio < limits["drop"]:
         return f"\U0001f7e5 Descente recommandée, le ratio est inférieur au seuil de {limits['drop']}%"
+
     elif (
         limits["up2"] <= 100
         and ratio > limits["up2"]
         and match_count >= required_matches_up2
     ):
         return f"\U0001f7e9 Vous pouvez monter de 2 niveaux, le seuil requis de {limits['up2']}% a été atteint"
+
     elif ratio > limits["up1"]:
         return f"\U0001f7e9 Vous pouvez monter de 1 niveau, le seuil requis de {limits['up1']}% a été atteint"
     else:
         return f"\U00002b1c Maintien conseillé, pour info: le seuil de montée est égal à {limits['up1']}%"
+

@@ -14,8 +14,18 @@ def has_multiple_classement_joueur(matches):
 
 # Get player results from TPPWB API and convert them to replace the JSON of this app
 def tppwb_matches(affiliation_number):
-    tppwb_data = tppwb_raw_data(affiliation_number)
-    # return tppwb_data, False
+    # Use the begining of the previous semester as start date for the matches results
+    # (Category change will be computed at the end of the semester, based on the last 12 months at most)
+    today = datetime.date.today()
+    if today.month <= 6:
+        # January to June: use July 1st of the previous year
+        date_from = datetime.date(today.year - 1, 7, 7)
+    else:
+        # July to December: use January 1st of the current year
+        date_from = datetime.date(today.year, 1, 1)
+
+    tppwb_data = tppwb_raw_data(affiliation_number, date_from)
+
 
     # Sort by ascending order of "Date"
     tppwb_data = sorted(tppwb_data, key=lambda x: x.get("Date", ""))
@@ -82,37 +92,29 @@ def tppwb_matches(affiliation_number):
         # Determine the start date of the current semester
         today = datetime.date.today()
         if today.month <= 6:
-            semester_start = datetime.date(today.year, 1, 1)
+            date_from = datetime.date(today.year, 1, 1)
         else:
-            semester_start = datetime.date(today.year, 7, 7)
+            date_from = datetime.date(today.year, 7, 7)
 
         # Filter matches to keep only those from the current semester
         matches = [
             m
             for m in matches
             if datetime.datetime.strptime(m["date"], "%Y-%m-%dT%H:%M:%S").date()
-            >= semester_start
+            >= date_from
         ]
         category_change = True
     else:
         category_change = False
 
-    return matches, category_change
+    return matches, category_change, date_from
+
 
 
 # Get player results from TPPWB API based on affiliation number
 # https://padel-webapi.tppwb.be/Help/Api/GET-api-Players-GetResultsByPlayer_affiliationNumber_singleOrDouble_dateFrom_dateTo_top_splitVictoriesAndDefeats_splitSinglesAndDoubles
-def tppwb_raw_data(affiliation_number):
-    # Use the begining of the previous semester as start date for the matches results
-    # (Category change will be computed at the end of the semester, based on the last 12 months at most)
-    today = datetime.date.today()
-    if today.month <= 6:
-        # January to June: use July 1st of the previous year
-        date_from = datetime.date(today.year - 1, 7, 1)
-    else:
-        # July to December: use January 1st of the current year
-        date_from = datetime.date(today.year, 1, 1)
 
+def tppwb_raw_data(affiliation_number, date_from):
     url = (
         "https://padel-webapi.tppwb.be/api/Players/GetResultsByPlayer"
         f"?affiliationNumber={affiliation_number}"

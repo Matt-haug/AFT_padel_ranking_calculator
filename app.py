@@ -26,6 +26,7 @@ if "flag_uploaded_file" not in st.session_state:
 # if hasattr(st, "query_params") and st.query_params:
 #     affiliation_prefill = st.query_params.get("affiliation_number")
 
+
 with st.form("affiliation_form", clear_on_submit=False):
     col_aff, col_btn = st.columns([3, 2])
     with col_aff:
@@ -55,24 +56,28 @@ with st.form("affiliation_form", clear_on_submit=False):
             st.session_state["flag_uploaded_file"] = False
 
             try:
-                matches, category_change = tppwb_matches(affiliation_number)
+                matches, category_change, date_from = tppwb_matches(affiliation_number)
+
                 # st.write(matches)
 
                 if isinstance(matches, list):
                     if len(matches) > 0:
-                        st.success("✅ Matchs chargés !")
+
+                        st.success(f"✅ Matchs chargés (à partir du {date_from}) !")
                         st.session_state["matches"] = matches
                         st.session_state["flag_uploaded_file"] = True
-                        if category_change:
-                            st.info(
-                                "⚠️ On détecte un changement de catégorie durant les 12 derniers mois. "
-                                "On ne regarde que les résultats du semestre en cours."
-                            )
                     else:
                         st.warning(
-                            "⚠️ Données récupérées mais pas de résultats encodés... "
+                            f"⚠️ Données récupérées mais pas de résultats encodés (depuis {date_from})...\n\n"
                             "Peut-être n'avez vous pas encore joué de matchs cette période-ci ?"
                         )
+                    
+                    if category_change:
+                        st.info(
+                            f"⚠️ On détecte un changement de catégorie durant la dernière période. "
+                            f"On ne regarde que les résultats du semestre en cours."
+                        )
+
                 else:
                     st.error("❌ Données reçues invalides.")
             except Exception as e:
@@ -166,6 +171,7 @@ else:
         "Entrez votre numéro d'affiliation ou ajoutez des matchs manuellement pour commencer le calcul."
     )
 
+
 manual_input = st.checkbox(
     "Ajouter des matchs manuellement ou depuis un fichier JSON", value=False
 )
@@ -193,6 +199,7 @@ if manual_input:
 
     with st.form("match_form"):
         st.subheader("Ajouter un match")
+
 
         genre = st.selectbox("Genre", ["Messieurs", "Dames"])
         category = st.selectbox(
@@ -237,6 +244,7 @@ if manual_input:
             }
             st.session_state["matches"] = st.session_state["matches"] + [match]
             st.success("✅ Match ajouté avec succès !")
+
 
 st.divider()
 st.caption(
