@@ -31,7 +31,7 @@ RANKING_THRESHOLDS_WOMEN = {
 def get_ranking_correction(player, partner, opp1, opp2, result):
 
     # define ranking ladder
-    RANKS = [100, 200, 300, 400, 500, 700, 1000]
+    RANKS = [50, 100, 200, 300, 400, 500, 700, 1000]
     index = {r: i for i, r in enumerate(RANKS)}
 
     # convert rankings to ladder indices
