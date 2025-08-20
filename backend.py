@@ -123,11 +123,17 @@ def generate_recommendation(
         return f"\U0001f7e5 Descente recommandée, le ratio est inférieur au seuil de {limits['drop']}%"
 
     elif (
-        limits["up2"] <= 100
+        limits["up2"] < 100
         and ratio > limits["up2"]
         and match_count >= required_matches_up2
     ):
         return f"\U0001f7e9 Vous pouvez monter de 2 niveaux, le seuil requis de {limits['up2']}% a été atteint"
+    elif (
+        limits["up2"] < 100
+        and ratio > limits["up2"]
+        and match_count < required_matches_up2
+    ):
+        return f"\U0001f7e9 Le seuil requis de {limits['up2']}% a été atteint mais le nombre de matchs est inférieur à {required_matches_up2}, ce qui est insuffisant pour monter de deux niveaux. Montée de 1 niveau possible."
 
     elif ratio > limits["up1"]:
         return f"\U0001f7e9 Vous pouvez monter de 1 niveau, le seuil requis de {limits['up1']}% a été atteint"
