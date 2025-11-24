@@ -6,7 +6,7 @@ import pandas as pd
 import streamlit as st
 
 from backend import compute_win_ratio
-from tppwb import tppwb_matches, tppwb_player_info
+from tppwb import TPPWBAPIError, tppwb_matches, tppwb_player_info
 
 st.set_page_config(
     page_title="Calculateur classement AFT padel", page_icon="🎾", layout="centered"
@@ -80,8 +80,11 @@ with st.form("affiliation_form", clear_on_submit=False):
 
                 else:
                     st.error("❌ Données reçues invalides.")
-            except Exception as e:
-                st.error(f"❌ Erreur lors de la récupération des données : {e}")
+            except TPPWBAPIError as e:
+                st.warning("⚠️ Impossible de récupérer les données depuis l'API TPPWB.")
+                matches = []
+                category_change = False
+                date_from = None
 
 # ---------- DISPLAY RESULTS ----------
 if len(affiliation_number) == 7:
@@ -96,9 +99,13 @@ if len(affiliation_number) == 7:
             )
         else:
             st.warning("Aucun joueur trouvé pour ce numéro d'affiliation.")
-    except Exception as e:
-        st.error(f"❌ Erreur lors de la récupération des informations du joueur : {e}")
-        st.write(player_info)
+    except TPPWBAPIError as e:
+        st.warning(
+            "⚠️ Impossible de récupérer vos résultats automatiquement. "
+            "L'AFT semble avoir bloqué l'accès. "
+            "Vous pouvez ajouter vos matchs manuellement ou via un fichier JSON."
+        )
+
         player_info = {}
 
 if st.session_state["matches"]:
@@ -176,27 +183,34 @@ manual_input = st.checkbox(
     "Ajouter des matchs manuellement ou depuis un fichier JSON", value=False
 )
 
-
 if manual_input:
 
+    # ---------- UPLOAD JSON ----------
     uploaded_file = st.file_uploader(
         "📂 Charger un fichier de matchs (.json)", type="json"
     )
 
-    if st.session_state["flag_uploaded_file"] is False and uploaded_file is not None:
+    if (
+        uploaded_file is not None
+        and st.session_state.get("flag_uploaded_file", False) is False
+    ):
         try:
             loaded_data = json.load(uploaded_file)
             if isinstance(loaded_data, list) and all(
                 isinstance(match, dict) for match in loaded_data
             ):
-                st.session_state["matches"] = st.session_state["matches"] + loaded_data
+                st.session_state["matches"] += loaded_data
                 st.success("✅ Matchs chargés avec succès !")
-                st.session_state["flag_uploaded_file"] = True
+                st.session_state["flag_uploaded_file"] = (
+                    True  # bloque les uploads répétés
+                )
+                st.rerun()
             else:
                 st.error("❌ Fichier invalide.")
         except Exception as e:
             st.error(f"❌ Erreur lors du chargement du fichier: {e}")
 
+    # ---------- AJOUT MANUEL ----------
     with st.form("match_form"):
         st.subheader("Ajouter un match")
 
@@ -241,8 +255,9 @@ if manual_input:
                 "classement_adversaire_2": opp2_rank,
                 "categorie": category,
             }
-            st.session_state["matches"] = st.session_state["matches"] + [match]
+            st.session_state["matches"].append(match)  # ajout manuel toujours possible
             st.success("✅ Match ajouté avec succès !")
+            st.rerun()
 
 
 st.divider()

@@ -26,7 +26,6 @@ def tppwb_matches(affiliation_number):
 
     tppwb_data = tppwb_raw_data(affiliation_number, date_from)
 
-
     # Sort by ascending order of "Date"
     tppwb_data = sorted(tppwb_data, key=lambda x: x.get("Date", ""))
 
@@ -110,9 +109,9 @@ def tppwb_matches(affiliation_number):
     return matches, category_change, date_from
 
 
-
 # Get player results from TPPWB API based on affiliation number
 # https://padel-webapi.tppwb.be/Help/Api/GET-api-Players-GetResultsByPlayer_affiliationNumber_singleOrDouble_dateFrom_dateTo_top_splitVictoriesAndDefeats_splitSinglesAndDoubles
+
 
 def tppwb_raw_data(affiliation_number, date_from):
     url = (
@@ -123,9 +122,20 @@ def tppwb_raw_data(affiliation_number, date_from):
         f"&splitSinglesAndDoubles=False"
         f"&dateFrom={date_from.strftime('%d%m%Y')}"
     )
-    response = requests.get(url)
-    response.raise_for_status()
-    return response.json()
+    try:
+        response = requests.get(url, timeout=5)
+        if response.status_code in [401, 403]:
+            raise TPPWBAPIError(
+                "⚠️ Impossible de récupérer les données depuis l'API TPPWB. "
+                "Il semble que l'AFT ait bloqué l'accès récemment."
+            )
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        raise TPPWBAPIError(
+            "⚠️ Impossible de récupérer les données depuis l'API TPPWB. "
+            "Il semble que l'AFT ait bloqué l'accès récemment."
+        ) from e
 
 
 # Get player info from TPPWB API (Name, FirstName, Rank)
@@ -135,6 +145,23 @@ def tppwb_player_info(affiliation_number):
         "https://padel-webapi.tppwb.be/api/Players/SearchPlayerForAutoComplete"
         f"?searchText={affiliation_number}&isNumFed=true"
     )
-    response = requests.get(url)
-    response.raise_for_status()
-    return response.json()
+    try:
+        response = requests.get(url, timeout=5)
+        if response.status_code in [401, 403]:
+            raise TPPWBAPIError(
+                "⚠️ Impossible de récupérer les informations du joueur depuis l'API TPPWB. "
+                "Il semble que l'AFT ait bloqué l'accès récemment."
+            )
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        raise TPPWBAPIError(
+            "⚠️ Impossible de récupérer les informations du joueur depuis l'API TPPWB. "
+            "Il semble que l'AFT ait bloqué l'accès récemment."
+        ) from e
+
+
+class TPPWBAPIError(Exception):
+    """Exception personnalisée pour signaler que l'API TPPWB est inaccessible ou bloquée."""
+
+    pass
